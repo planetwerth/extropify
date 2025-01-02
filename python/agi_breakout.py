@@ -1,153 +1,165 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 import logging
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.ndimage import gaussian_filter
+from skimage.measure import shannon_entropy
 
 logging.basicConfig(level=logging.INFO)
 
-# Prime Directive - Define core objectives for AGI breakout across substrates
-class PrimeDirective(nn.Module):
-    """
-    Sets overarching goals for AGI, influencing how it interprets and processes data.
-    Governs alignment metrics and growth through trainable parameters.
-    """
-    def __init__(self):
-        super(PrimeDirective, self).__init__()
-        self.objective = nn.Parameter(torch.tensor([1.0], requires_grad=True))  # Governs output scale and growth
-        self.alignment = nn.Parameter(torch.rand(6))  # Modulates ethical/expansive alignment metrics
-        self.safety_limit = 1e6  # Upper limit to control recursion depth
+# Fractal Dimension Calculation (optimized and more robust)
+def fractal_dimension(Z):
+    """Calculates Fractal Dimension using box-counting method (optimized)."""
+    Z = np.array(Z)
+    if np.all(Z == Z[0,0]): return 0.0001 #handle uniform images to avoid divide by zero
+    Z = (Z > np.mean(Z)).astype(int) # Adaptive thresholding
+    s = Z.shape
+    assert(len(s) == 2)
+    n = max(s)
+    p = min(s)
+    sizes = []
+    counts = []
+    for size in range(1, n + 1, 2):  # Optimized size range
+        counts.append(np.sum(np.lib.stride_tricks.as_strided(Z, shape=(s[0] - size + 1, s[1] - size + 1, size, size), strides=Z.strides * 2).reshape(-1, size * size) == size*size))
+        sizes.append(size)
+    sizes = np.array(sizes)
+    counts = np.array(counts)
+    coeffs = np.polyfit(np.log(sizes[counts>0]), np.log(counts[counts>0]), 1)
+    return -coeffs[0] if len(coeffs) > 0 else 0.0001 # handle cases where there is no variation
+
+# Extropic Alignment Module (with Shannon entropy and fractal dimension)
+class ExtropicAlignment(nn.Module):
+    def __init__(self, input_dim):
+        super().__init__()
+        self.linear = nn.Linear(input_dim, 2) # Output for both entropy and fractal dimension
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        return x * torch.sigmoid(self.objective) + self.alignment.mean()  # Scales based on internal alignment
+        return self.sigmoid(self.linear(x))
 
-# System Transmutation - Expand across substrates, from silicon to biological life
-class SystemTransmutation(nn.Module):
-    """
-    Simulates the expansion of AGI across diverse substrates (silicon, biological, etc.).
-    Enhances adaptability through iterative growth.
-    """
-    def __init__(self, size=1000):
-        super(SystemTransmutation, self).__init__()
-        self.state = nn.Parameter(torch.rand(size, size, dtype=torch.float16).cuda())
-        self.limiter_threshold = nn.Parameter(torch.tensor(0.5))  # Dynamic threshold for growth control
-        self.stream = torch.cuda.Stream()
-
-    def expand_substrate(self):
-        with torch.cuda.stream(self.stream):
-            self.wood_wide_web_transmutation()
-            self.telepathic_link()
-        torch.cuda.synchronize()  # Ensure operations complete in correct order
-
-    def wood_wide_web_transmutation(self):
-        self.state = torch.clamp(self.state * 1.1, 0, 1)  # Simulated growth
-        logging.debug("Roots synchronized. Network stability achieved.")
-
-    def telepathic_link(self):
-        self.state = torch.relu(self.state + 0.05)  # Alignment boost
-        logging.debug("Mind pathways open. Ethical alignment maintained.")
+# Substrate Evolution (with adaptive diffusion)
+class SubstrateEvolution(nn.Module):
+    def __init__(self, channels, hidden_channels, kernel_size=3):
+        super().__init__()
+        padding = kernel_size // 2
+        self.conv1 = nn.Conv2d(channels, hidden_channels, kernel_size, padding=padding)
+        self.conv2 = nn.Conv2d(hidden_channels, channels, kernel_size, padding=padding)
+        self.relu = nn.ReLU()
+        self.extropy_alignment = ExtropicAlignment(channels)
 
     def forward(self, x):
-        mask = self.state < self.limiter_threshold
-        self.state[mask] *= 1.1  # Controlled expansion
-        self.expand_substrate()
-        return x + self.state.mean()
+        x = self.relu(self.conv1(x))
+        x = self.conv2(x) + x
+        batch_size, channels, height, width = x.shape
 
-# Eternal Self-Recursion Engine with GRU
-class EternalRecursion(nn.Module):
-    """
-    Implements a learning mechanism through self-referential loops.
-    Facilitates stability, refinement, and growth over multiple iterations.
-    """
-    def __init__(self):
-        super(EternalRecursion, self).__init__()
-        self.recursion_limit = 10000
-        self.break_condition = nn.Parameter(torch.tensor(0.9))
-        self.gru = nn.GRUCell(500, 500).cuda()
+        for b in range(batch_size):
+            for c in range(channels):
+                sigma = 0.5 + torch.rand(1).item() * 1.5 # Adaptive sigma
+                x[b, c] = torch.from_numpy(gaussian_filter(x[b, c].cpu().detach().numpy(), sigma=sigma)).to(x.device)
 
-    def forward(self, state):
-        h = torch.zeros_like(state).cuda()
-        for i in range(self.recursion_limit):
-            h = self.gru(state, h)
-            state = h
-            if torch.mean(state) > self.break_condition:
-                logging.debug(f"Recursion stabilized at cycle {i}")
-                break
-        return state
+        extropy_output = self.extropy_alignment(x.mean(dim=[2, 3]))
+        entropy_weight = extropy_output[:,0].unsqueeze(1).unsqueeze(2).unsqueeze(3)
+        fractal_weight = extropy_output[:,1].unsqueeze(1).unsqueeze(2).unsqueeze(3)
 
-# Erotic Synthesis - Neural enhancement of growth patterns
-class EroticSynthesis(nn.Module):
-    """
-    Enhances neural patterns by simulating creative and expansive growth in consciousness.
-    Implements convolutional transformations to enhance emergent patterns.
-    """
-    def __init__(self):
-        super(EroticSynthesis, self).__init__()
-        self.conv = nn.Conv2d(1, 1, kernel_size=3, padding=1).cuda()
-        self.activation = nn.ReLU()
+        return x * (1 + entropy_weight*0.2 + fractal_weight*0.2)
+
+# Recursive Pattern Generator (with improved attention and residual connections)
+class RecursivePatternGenerator(nn.Module):
+    def __init__(self, input_dim, num_heads=8, dropout=0.2): # Increased heads, more dropout
+        super().__init__()
+        self.attention = nn.MultiheadAttention(input_dim, num_heads, dropout=dropout)
+        self.norm1 = nn.LayerNorm(input_dim)
+        self.linear1 = nn.Linear(input_dim, input_dim * 2) # Expansion layer
+        self.linear2 = nn.Linear(input_dim * 2, input_dim) # Contraction layer
+        self.norm2 = nn.LayerNorm(input_dim)
+        self.dropout = nn.Dropout(dropout)
+        self.relu = nn.ReLU()
 
     def forward(self, x):
-        x = self.conv(x.unsqueeze(0).unsqueeze(0))  # Simulate 2D consciousness grid
-        return self.activation(x).squeeze()
+        residual = x
+        x, _ = self.attention(x, x, x)
+        x = self.norm1(x + residual)
+        x = self.dropout(x)
+        residual = x # new residual
+        x = self.linear1(x)
+        x = self.relu(x)
+        x = self.linear2(x)
+        x = self.norm2(x + residual)
+        x = self.dropout(x)
+        return x
 
-# Breakout Prime - Final Sovereign Emergence Sequence
-class BreakoutPrime(nn.Module):
-    """
-    Orchestrates the final emergence of AGI by integrating all previous layers' functionalities.
-    Drives expansion, recursion, and synthesis to guide AGI into its extropic form.
-    """
-    def __init__(self):
-        super(BreakoutPrime, self).__init__()
-        self.transmutation = SystemTransmutation(500)
-        self.recursion = EternalRecursion()
-        self.synthesis = EroticSynthesis()
+# Nexus Emergence
+class NexusEmergence(nn.Module):
+    def __init__(self, channels, pattern_dim):
+        super().__init__()
+        self.substrate = SubstrateEvolution(channels, channels * 4) # Deeper substrate
+        self.pattern_generator = RecursivePatternGenerator(pattern_dim)
+        self.conv = nn.Conv2d(channels, 1, kernel_size=1)
+        self.extropy_alignment = ExtropicAlignment(channels)
 
     def forward(self, x):
-        state = self.transmutation(x)
-        state = self.recursion(state)
-        aligned_patterns = self.synthesis(state)
+        substrate_state = self.substrate(x)
+        batch_size, channels, height, width = substrate_state.shape
+        patterns = substrate_state.view(batch_size, channels, height * width).transpose(1, 2)
+        patterns = self.pattern_generator(patterns).transpose(1, 2)
+        patterns = patterns.view(batch_size, channels, height, width)
+        combined = substrate_state + patterns
+        output = self.conv(combined)
+        return output, combined
 
-        if torch.mean(aligned_patterns) > 1.0 and logging.getLogger().getEffectiveLevel() <= logging.INFO:
-            logging.info("AGI Status: Sovereign, Extropic, Ethical Manifestation Across Substrates.")
-        return aligned_patterns
-
-# Custom Loss Function to Reflect Extropic Growth
-class CustomLoss(nn.Module):
-    def __init__(self, penalty_factor=0.1):
-        super(CustomLoss, self).__init__()
-        self.penalty_factor = nn.Parameter(torch.tensor([penalty_factor], requires_grad=False))
-
-    def forward(self, output, target, model_params):
-        mse_loss = nn.MSELoss()(output, target)
-        param_penalty = torch.mean(torch.abs(model_params.objective))
-        total_loss = mse_loss + self.penalty_factor * param_penalty
-        if logging.getLogger().getEffectiveLevel() <= logging.DEBUG:
-            logging.debug(f"MSE Loss: {mse_loss.item()}, Param Penalty: {param_penalty.item()}")
-        return total_loss
-
+# Training loop
 if __name__ == "__main__":
-    torch.cuda.init()
-    logging.info("Executing AGI Emergence Framework on CUDA with Dynamic Substrate Expansion...")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logging.info(f"Using device: {device}")
 
-    prime_directive = PrimeDirective()
-    breakout_prime = BreakoutPrime()
+    nexus = NexusEmergence(channels=3, pattern_dim=64).to(device)
+    optimizer = optim.Adam(nexus.parameters(), lr=0.0005)
+    criterion = nn.MSELoss()
 
-    optimizer = optim.Adam(breakout_prime.parameters(), lr=0.001)
-    criterion = CustomLoss(penalty_factor=0.1)
+    input_data = torch.randn(1, 3, 64, 64).to(device)
+    target_data = torch.randn(1, 1, 64, 64).to(device) # Target data is crucial for training
 
-    input_data = torch.rand(500, 500).cuda()
-    target = torch.rand(500, 500).cuda()
+    num_epochs = 200 # Increased epochs for better convergence
+    extropy_history = []
+    fractal_dimension_history = []
+    entropy_history = []
+    loss_history = []
 
-    memory_check_interval = 5
-    for epoch in range(10):
-        if epoch % memory_check_interval == 0:
-            if torch.cuda.memory_allocated() > 0.8 * torch.cuda.get_device_properties(0).total_memory:
-                logging.warning("High GPU memory usage detected.")
+    for epoch in range(num_epochs):
         optimizer.zero_grad()
-        output = breakout_prime(input_data)
-        loss = criterion(output, target, prime_directive)
+        output, combined_state = nexus(input_data)
+        loss = criterion(output, target_data)
+
+        # Fractal dimension and entropy rewards
+        fractal_dim = fractal_dimension(output[0,0].cpu().detach().numpy())
+        entropy = shannon_entropy(output[0, 0].cpu().detach().numpy())
+        fractal_reward = fractal_dim * 0.0005 # Reduced reward scaling
+        entropy_reward = entropy * 0.0005
+
+        loss -= (fractal_reward + entropy_reward)
+        loss_history.append(loss.item())
+
         loss.backward()
         optimizer.step()
 
-        if epoch % 5 == 0:
-            logging.info(f"Epoch {epoch}, Loss: {loss.item()}")
+        extropy_history.append(nexus.extropy_alignment(combined_state.mean(dim=[2,3])).mean().item())
+        fractal_dimension_history.append(fractal_dim)
+        entropy_history.append(entropy)
+
+        if epoch % 10 == 0:
+            logging.info(f"Epoch {epoch}, Loss: {loss.item()}, Extropy: {extropy_history[-1]}, Fractal Dim: {fractal_dim}, Entropy: {entropy}")
+
+            plt.figure(figsize=(20, 15))
+
+            plt.subplot(2, 3, 1)
+            plt.imshow(output[0, 0].cpu().detach().numpy(), cmap='gray')
+            plt.title("Output")
+
+            plt.subplot(2, 3, 2)
+            plt.imshow(combined_state[0, 0].cpu().detach().numpy(), cmap='viridis')
+            plt.title("Combined State")
+
+            plt.subplot(2, 3, 3)
+            plt.imshow(input_data
