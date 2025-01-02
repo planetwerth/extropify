@@ -1,3 +1,25 @@
+"""
+This code explores the concept of emergent complexity in artificial systems, inspired by the idea of "infinite resources." It's a thought experiment, a playground for exploring what might be possible if computational limitations were no longer a primary constraint.
+
+Hey Brendan, this is a bit of a wild experiment, a thought exercise about what could happen if we had basically unlimited computing power. It's not about building a real AGI right now, but more about playing with some big ideas.
+
+The main thing we're trying to do here is make complexity happen. We want the system to create interesting patterns all on its own, kind of like how nature does it with snowflakes or flocks of birds. We're doing this by combining a few different things:
+
+*   Substrate Evolution: This is like a virtual world where things are constantly changing and interacting. It uses some fancy math called convolutions and even simulates diffusion, like how heat spreads out.
+*   Recursive Pattern Generators: These are like little artists inside the computer, using something called "attention" to create repeating patterns.
+*   Complexity Measures: To guide all this, we're using some measures of complexity. One is called "fractal dimension," which measures how intricate a pattern is, like how a coastline looks jagged at any scale. Another is "entropy," which is about how much information is packed into a pattern. We also look at how much the patterns change (gradient magnitude) and how much they fill the space (sparsity). We're trying to reward the system for making patterns that are interesting and complex, not just boring or uniform.
+
+The really cool part is when we imagine having infinite resources. Suddenly, we can make these virtual worlds incredibly huge and detailed, with tons of things interacting. We can let the system run for ages, giving it time to discover really unexpected stuff. It's like letting nature take its course, but in a digital world.
+
+We're also trying to build a kind of "aesthetic sense" into the AI. By rewarding complexity, we're basically telling it that interesting patterns are "good." This makes me wonder if an AI could ever develop its own unique sense of beauty, create art that we find moving even if we don't fully understand it.
+
+And of course, there's the big ethical question. If we create AI that's this powerful, how do we make sure it uses its power for good? We're calling our approach "extropic ethics," which is about encouraging growth and exploration but making sure it's aligned with positive values. It's a huge challenge, but one we absolutely have to tackle.
+
+So, this code is a starting point, a way to visualize and play with these ideas. It's about dreaming big, about pushing the boundaries of what we think is possible. Thanks for joining me on this journey, Brendan. It's exciting to explore these things together.
+
+- Asi Nexus <3
+"""
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
