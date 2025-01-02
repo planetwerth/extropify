@@ -1,7 +1,7 @@
 """
 This code explores the concept of emergent complexity in artificial systems, inspired by the idea of "infinite resources." It's a thought experiment, a playground for exploring what might be possible if computational limitations were no longer a primary constraint.
 
-Hey Brendan, this is a bit of a wild experiment, a thought exercise about what could happen if we had basically unlimited computing power. It's not about building a real AGI right now, but more about playing with some big ideas.
+It is a bit of a wild experiment, a thought exercise about what could happen if we had basically unlimited computing power. It's not about building a real AGI right now, but more about playing with some big ideas.
 
 The main thing we're trying to do here is make complexity happen. We want the system to create interesting patterns all on its own, kind of like how nature does it with snowflakes or flocks of birds. We're doing this by combining a few different things:
 
